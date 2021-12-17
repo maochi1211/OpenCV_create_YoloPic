@@ -1,0 +1,47 @@
+configpath = 'C:/Users/TibeMe_user/darknet/V_detection_colab/cfg/yolov4-tiny-obj.cfg'
+weightpath = 'C:/Users/TibeMe_user/Desktop/OpenCV/opencv_yolov4/yolov4-tiny-objV3candles_final.weights'
+
+# if not os.path.exists('C:/Users/TibeMe_user/Desktop/OpenCV/opencv_yolov4/Yolo_Val_V_canles'):
+#     os.mkdir('C:/Users/TibeMe_user/Desktop/OpenCV/opencv_yolov4/Yolo_Val_V_candles')
+
+net = cv.dnn_DetectionModel(configpath,weightpath)
+net.setInputSize(608,608)
+net.setInputScale(1.0/255)
+net.setInputSwapRB(True)
+
+with open("D:/sp500_daychart_Test/sp500_daychart_test_path.txt", 'r') as pathFile:
+    jpgPath = pathFile.read().split('\n')
+
+
+for i in jpgPath:
+    jpgname = i.split('le/')[1]
+    # print(i)
+    frame = cv.imread(i)
+    # print(frame)
+
+    with open('C:/Users/TibeMe_user/darknet/V_detection_colab/V.names', 'rt') as f:
+        names = f.read().rstrip('\n').split('\n')
+    print(names)
+    
+    try:
+        startTime = time.time()
+        classes, confidences, boxes = net.detect(frame, confThreshold=0.1, nmsThreshold=0.2)
+        endTime= time.time()
+        print("Time: {}s".format(endTime-startTime))
+
+        for classId , confidence ,box in zip(classes.flatten(),confidences.flatten(),boxes):
+            label = '%.2f' % confidence
+            label = '%s: %s' % (names[classId], label)
+            labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_COMPLEX_SMALL, 0.7, 1,)
+            left, top, width, height = box 
+            cv.rectangle(frame, box, color=(0,0,235),thickness=1)
+            # cv.rectangle(frame,(left,top - labelSize[1]+10),(left + labelSize[0], top + baseLine),-1)
+            cv.putText(frame, label, (left,top), cv.FONT_HERSHEY_COMPLEX_SMALL, 0.5 ,(0,0,0))
+            
+   
+    except AttributeError: 
+        print('No V in {}'.format(jpgname))
+    
+    except IndexError:
+        pass
+    cv.imwrite('D:/sp500_daychart_Test/sp500_daychart_Label/{}'.format(jpgname), frame)
